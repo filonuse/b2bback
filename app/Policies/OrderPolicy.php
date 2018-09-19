@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Policies;
+
+use App\Enums\OrderStatus;
+use App\Enums\RoleType;
+use App\Models\User;
+use App\Models\Order;
+use Illuminate\Auth\Access\HandlesAuthorization;
+
+class OrderPolicy
+{
+    use HandlesAuthorization;
+
+    /**
+     * Determine whether the user can view the order.
+     *
+     * @param  \App\Models\User $user
+     * @param  \App\Models\Order $order
+     * @return mixed
+     */
+    public function view(User $user, Order $order)
+    {
+        return ($user->id === $order->customer_id) || ($user->id === $order->provider_id);
+    }
+
+    /**
+     * Determine whether the user can create orders.
+     *
+     * @param  \App\Models\User $user
+     * @return mixed
+     */
+    public function create(User $user)
+    {
+        return $user->hasRole(RoleType::CUSTOMER);
+    }
+
+    /**
+     * Determine whether the user can update the order.
+     *
+     * @param  \App\Models\User $user
+     * @param  \App\Models\Order $order
+     * @return mixed
+     */
+    public function update(User $user, Order $order)
+    {
+        $status = $order->status()->value('name');
+
+        return ($user->id === $order->provider_id)
+            && ($status !== OrderStatus::ACCEPTED_CUSTOMER)
+            && ($status !== OrderStatus::CANCELED);
+    }
+
+    /**
+     * Determine whether the user can delete the order.
+     *
+     * @param  \App\Models\User $user
+     * @param  \App\Models\Order $order
+     * @return mixed
+     */
+    public function delete(User $user, Order $order)
+    {
+        //
+    }
+}
